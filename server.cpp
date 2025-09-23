@@ -1,5 +1,5 @@
 #include "SomeipBinding.h"
-#include "AraExcev.h"
+#include "AraExec.h"   // dùng ara::exec
 
 #include <iostream>
 #include <thread>
@@ -12,9 +12,9 @@ using json = nlohmann::json;
 using namespace ara;
 
 struct ManifestCfg {
-    std::string appName = "RadarServiceApp";
-    std::string exeName = "RadarService";
-    std::string defaultMode = "NormalMode";
+    std::string appName      = "RadarServiceApp";
+    std::string exeName      = "RadarService";
+    std::string defaultMode  = "NormalMode";
     std::string restartPolicy = "on-failure"; // always | on-failure | no
 };
 
@@ -34,7 +34,7 @@ static ManifestCfg LoadManifest(const std::string& path) {
             const auto& exe = m["executables"][0];
             if (exe.contains("name")) cfg.exeName = exe["name"].get<std::string>();
         }
-        if (m.contains("defaultMode")) cfg.defaultMode = m["defaultMode"].get<std::string>();
+        if (m.contains("defaultMode"))   cfg.defaultMode  = m["defaultMode"].get<std::string>();
         if (m.contains("restartPolicy")) cfg.restartPolicy = m["restartPolicy"].get<std::string>();
     } catch (const std::exception& e) {
         std::cerr << "[Manifest] Lỗi parse: " << e.what()
@@ -50,9 +50,9 @@ static std::string pick_manifest_path(int argc, char** argv) {
 }
 
 static bool to_auto_restart(const std::string& policy) {
-    if (policy == "always") return true;
+    if (policy == "always")     return true;
     if (policy == "on-failure") return true;
-    if (policy == "no") return false;
+    if (policy == "no")         return false;
     return true; // mặc định
 }
 
@@ -79,23 +79,22 @@ int main(int argc, char** argv) {
               << ", autoRestart=" << std::boolalpha << autoRestart << "\n";
 
     // 4) Khởi tạo "ara::exec" mô phỏng
-    excev::ApplicationClient exec(manifest.exeName, autoRestart);
-    exec.RegisterApplication();
-    exec.SetStopHandler([] {
+    exec::ApplicationClient execCli(manifest.exeName, autoRestart);
+    execCli.RegisterApplication();
+    execCli.SetStopHandler([] {
         std::cout << "[RadarService] Cleanup before stop...\n";
     });
-    exec.Start();
+    execCli.Start();
 
     // 5) Khởi tạo SOME/IP service
     com::SomeipSkeleton skeleton(manifest.exeName,
         [&](const com::Message& msg) {
             try {
-                // Giải mã payload -> chuỗi
                 std::string cfgStr(msg.payload.begin(), msg.payload.end());
                 std::cout << "[Server] Calibrate called with: " << cfgStr
                           << " (mode=" << activeMode << ")\n";
 
-                // Nhánh "DiagnosticMode": không cho hiệu chuẩn, chỉ trả read-only
+                // Diagnostic: chỉ trả read-only, không hiệu chuẩn
                 if (isDiagnostic && cfgStr != "CrashMe") {
                     std::string resp = "DIAG-ONLY: Calibration disabled in DiagnosticMode";
                     com::Message m{msg.method, std::vector<uint8_t>(resp.begin(), resp.end())};
@@ -103,18 +102,18 @@ int main(int argc, char** argv) {
                     return;
                 }
 
-                // Mô phỏng crash có chủ đích (để test RestartPolicy)
+                // Mô phỏng lỗi nghiệp vụ để test RestartPolicy
                 if (cfgStr == "CrashMe") {
                     throw std::runtime_error("💥 Simulated crash in RadarService");
                 }
 
-                // Normal mode: xử lý hiệu chuẩn
+                // Normal: xử lý hiệu chuẩn
                 std::string resp = "Calibrated OK: " + cfgStr;
                 com::Message m{msg.method, std::vector<uint8_t>(resp.begin(), resp.end())};
                 skeleton.SendResponse(m);
             } catch (...) {
-                // Báo crash cho "ExecM" (mô phỏng) -> restart tùy policy
-                exec.Crash();
+                // Báo crash cho "ExecM" (mô phỏng) -> restart theo policy
+                execCli.Crash();
             }
         });
 

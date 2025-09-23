@@ -21,7 +21,7 @@ link_directories(/usr/local/lib)
 set(SOURCES_COMMON
     AraCom_Skeleton.h
     SomeipBinding.h
-    AraExcev.h
+    AraExec.h
 )
 
 add_executable(client client.cpp ${SOURCES_COMMON})
