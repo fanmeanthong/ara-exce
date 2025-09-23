@@ -1,0 +1,17 @@
+{
+  "applicationManifest": {
+    "name": "RadarServiceApp",
+    "executables": [
+      {
+        "name": "RadarService",
+        "processType": "APPLICATION"
+      }
+    ],
+    "applicationModeDeclarations": [
+      { "name": "NormalMode" },
+      { "name": "DiagnosticMode" }
+    ],
+    "restartPolicy": "on-failure",
+    "defaultMode": "NormalMode"
+  }
+}

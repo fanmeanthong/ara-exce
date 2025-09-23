@@ -1,0 +1,22 @@
+{
+  "unicast": "127.0.0.1",
+  "logging": {
+    "level": "info",
+    "console": "true"
+  },
+  "applications": [
+    { "name": "RadarService", "id": "0x1212" },
+    { "name": "RadarClient", "id": "0x1313" }
+  ],
+  "services": [
+    {
+      "service": "0x1234",
+      "instance": "0x5678",
+      "unreliable": { "port": "30509" },
+      "reliable": { "port": "30510" },
+      "methods": [ "0x42" ]
+    }
+  ],
+  "routing": "RadarService",
+  "watchdog": { "enabled": "false" }
+}
