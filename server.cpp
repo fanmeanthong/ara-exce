@@ -159,7 +159,7 @@ int main(int argc, char** argv) {
 
                 // Intentional error for testing → report crash to ExecManager (EM will decide restart/terminate)
                 if (cfgStr == "CrashMe") {
-                    throw std::runtime_error("💥 Simulated crash in RadarService");
+                    throw std::runtime_error("Simulated crash in RadarService");
                 }
 
                 // Normal: handle calibration
