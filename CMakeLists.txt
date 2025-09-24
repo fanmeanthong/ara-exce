@@ -22,6 +22,7 @@ set(SOURCES_COMMON
     AraCom_Skeleton.h
     SomeipBinding.h
     AraExec.h
+    ExecManager.h
 )
 
 add_executable(client client.cpp ${SOURCES_COMMON})
